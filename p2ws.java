@@ -3,11 +3,10 @@ import java.net.*;
 import java.util.*;
 
 public class p2ws {
-
-
-
     public static void main(String args[]) {
+		//Only takes one arg the port number if more return error
 
+		
         int portnum = 12345; // default port number
 
         /* checking arguments for correct format */
@@ -27,8 +26,6 @@ public class p2ws {
             System.out.println("Too many arguments, exiting.");
             System.exit(3);
         }
-
         System.out.println("port number: " + portnum);
-
     }
 }
