@@ -1,8 +1,14 @@
+/* Group Members:
+ * Jingfei Shi
+ * Lindsey Crocker
+ * Erik Kamp
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class p2pws {
+public class p2pws implements Runnable {
     public static void main(String args[]) {
 		//Only takes one arg the port number if more return error
 
@@ -28,4 +34,19 @@ public class p2pws {
         }
         System.out.println("port number: " + portnum);
     }
+
+    ServerSocket svc = null; // new server socket
+
+    try {
+        svc = new ServerSocket(portnum, 5);
+    } catch (BindException e) {
+        System.out.println(e);
+        Ssytem.exit(4);
+    }
+
+    for (;;) {
+
+
+    
+
 }
