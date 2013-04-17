@@ -9,10 +9,16 @@ import java.net.*;
 import java.util.*;
 
 public class p2pws implements Runnable {
-    public static void main(String args[]) {
-		//Only takes one arg the port number if more return error
 
-		
+    Socket conn;
+
+    p2pws (Socket sock) {
+        this.conn = sock;
+    }
+
+    public static void main(String args[]) throws Exception {
+        //Only takes one arg the port number if more return error
+
         int portnum = 12345; // default port number
 
         /* checking arguments for correct format */
@@ -33,20 +39,40 @@ public class p2pws implements Runnable {
             System.exit(3);
         }
         System.out.println("port number: " + portnum);
+
+        ServerSocket svc = null; // new server socket
+
+        try {
+            svc = new ServerSocket(portnum, 5);
+        } catch (BindException e) {
+            System.out.println(e);
+            System.exit(4);
+        }
+
+        for (;;) {
+            Socket conn = svc.accept();
+            new Thread(new p2pws(conn)).start();
+        }
     }
 
-    ServerSocket svc = null; // new server socket
+    public void run() {
 
-    try {
-        svc = new ServerSocket(portnum, 5);
-    } catch (BindException e) {
-        System.out.println(e);
-        Ssytem.exit(4);
+        String line; //user input line
+
+        try {
+
+            BufferedReader fromClient = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            DataOutputStream toClient = new DataOutputStream(conn.getOutputStream());
+
+            while((line = fromClient.readLine()) != null) {
+
+                System.out.println("client sent: " + line);
+                toClient.writeBytes("received: " + line + '\n');
+            }
+            System.out.println("Client exited.");
+            conn.close();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
     }
-
-    for (;;) {
-
-
-    
-
 }

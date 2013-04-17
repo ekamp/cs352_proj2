@@ -123,7 +123,7 @@ public class CalcServer implements Runnable {
                 if (empty != true) {
                     stack.push(tmp1); 
                 }
-				System.out.println(e);
+				System.out.println("not enough numbers on the stack! " + e);
 				result = "not enough numbers on the stack!\n";
 			}
 		}

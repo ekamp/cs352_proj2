@@ -6,11 +6,11 @@
 import java.io.*;
 import java.net.*;
 
-public class CalcClient implements Runnable {
+public class testclient implements Runnable {
 
 	Socket conn; // client socket
 
-	CalcClient(Socket sock) {
+	testclient(Socket sock) {
 		this.conn = sock; // store socket in the connection
 	}
 
@@ -63,13 +63,11 @@ public class CalcClient implements Runnable {
 		BufferedReader userdata = new BufferedReader(new InputStreamReader(System.in));
 		DataOutputStream toServer = new DataOutputStream(conn.getOutputStream());
 
-		new Thread(new CalcClient(conn)).start(); // spawn a new thread 
+		new Thread(new testclient(conn)).start(); // spawn a new thread 
 		String line; // holds user input to the server
 		
 		while ((line = userdata.readLine()) != null) {
-			
-            if(line.isEmpty()) continue;
-            
+			if (line.isEmpty()) continue;
             try {
                 toServer.writeBytes(line + '\n');
             } catch (SocketException e) { // in case server dies mid-session
