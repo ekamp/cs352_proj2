@@ -23,8 +23,6 @@ public class p2pws implements Runnable {
 		//Only takes one arg the port number if more return error
 
 		int portnum = 12345; // default port number
-		
-		
 
 		/* checking arguments for correct format */
 		if (args.length == 1) {
@@ -64,8 +62,6 @@ public class p2pws implements Runnable {
 
 		String line; //user input line
 		String command = "", file = "";
-		
-		
 
 		try {
 			BufferedReader fromClient = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -86,8 +82,10 @@ public class p2pws implements Runnable {
 					//System.out.println(get(file));
 					toClient.writeBytes(get(file));
 					//System.out.println("wrote to client");
+					break;
 				} else if (command.equals("PUT")) {
-					System.out.println("put");
+					toClient.writeBytes(put(file));
+					
 				} else if (command.equals("DELETE")) {
 					System.out.println("delete");
 				} else if (command.equals("LIST")) {
@@ -99,7 +97,7 @@ public class p2pws implements Runnable {
 				} else if (command.equals("ADD")) {
 					System.out.println("add");
 				}
-				break;
+				
 			}
 
 			System.out.println("Client exited.");
@@ -188,8 +186,16 @@ public class p2pws implements Runnable {
 		return ret;
 
 	}
-
-
+	
+	public String put(String url) {
+		
+		
+		
+		
+		
+		return null;
+		
+	}
 
 
 }
