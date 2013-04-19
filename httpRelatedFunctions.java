@@ -1,10 +1,14 @@
 public class httpRelatedFunctions
 {
-/***Need to create a peer object in order to store peer data and references ...***/
+/*
+ * Need to create a peer object in order to store peer 
+ * data and references ...
+ */
 
 	/*Adds new content to the server */
 	/*Sends certain data to a certain peer which will be contacted through reference*/
 
+    
 	private String put (String data, String URL)
 	{
 		// grab the headers. Ignore all headers except for the pathname and Content-Length.
@@ -30,11 +34,10 @@ public class httpRelatedFunctions
 	/*returns data associated with the cooresponding URL, sends data in URL reference form */
 	private String get (String URL)
 	{
-		double hashnum;
-		int lookupnum;
-		String path = pathname(URL);
-		if( path.equals("local.html"))
-		{
+		double hashnum = hashfunction.md5(URL);
+		System.out.println("hash: " + hashnum);
+        
+        if(path.equals("local.html") {
 			//Include Content-length
 			//Close connection
 			return "HTTP/1.1 200 OK"
