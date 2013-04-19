@@ -16,11 +16,15 @@ public class p2pws implements Runnable {
 	p2pws (Socket sock) {
 		this.conn = sock;
 	}
+	
+	HashMap<String, String> filemem = create(); //global hashmap
 
 	public static void main(String args[]) throws Exception {
 		//Only takes one arg the port number if more return error
 
 		int portnum = 12345; // default port number
+		
+		
 
 		/* checking arguments for correct format */
 		if (args.length == 1) {
@@ -55,19 +59,17 @@ public class p2pws implements Runnable {
 		}
 	}
 
+	
 	public void run() {
 
 		String line; //user input line
 		String command = "", file = "";
-
-
+		
+		
 
 		try {
 			BufferedReader fromClient = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			DataOutputStream toClient = new DataOutputStream(conn.getOutputStream());
-
-			//HashMap<String, String> hm = create();
-
 
 			while ((line = fromClient.readLine()) != null) {
 
@@ -83,7 +85,7 @@ public class p2pws implements Runnable {
 				if (command.equals("GET")) {
 					//System.out.println(get(file));
 					toClient.writeBytes(get(file));
-					System.out.println("wrote to client");
+					//System.out.println("wrote to client");
 				} else if (command.equals("PUT")) {
 					System.out.println("put");
 				} else if (command.equals("DELETE")) {
@@ -108,26 +110,43 @@ public class p2pws implements Runnable {
 		}
 	}
 
-	/*
-	public HashMap create() {
-		HashMap<String, String> hm = new HashMap<String, String>();
-		return hm;	
+	
+	public HashMap<String, String> create() {
+		HashMap<String, String> filemem = new HashMap<String, String>();
+		String content1 = "Once upon a time, there was a fair maiden by the name of Vicki. " +
+				"She loved polishing her computers, and therefore, her gadgets are always very clean.\n";
+		
+		String content2 = "Seal seal seal! Anemone.\n";
+		
+		String content3 = "The fair maiden from content1 loves drinking water. Her Brita filter is her best friend.\n";
+		
+		try {
+			filemem.put(hashfunction.md5("/vicki.html"), content1);
+			filemem.put(hashfunction.md5("/anemone.html"), content2);
+			filemem.put(hashfunction.md5("/water.html"), content3);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		
+		return filemem;	
 
 	}
-	 */
 
 	public String get(String url) {
 
 		//System.out.println("url: " + url);
 
+		String response = "";
+		String content = "";
+		String clength = "";
 		String ret = "";
 		String hashnum = "";
 
 		if (url.equals("/local.html")) {
 			
-			String response = "HTTP/1.1 200 OK" + "\n";
+			response = "HTTP/1.1 200 OK" + "\n";
 
-			String content = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
+			content = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
 					+ "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">" + "\n"
 					+ "<head>" + "\n" 
 					+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />" + "\n"
@@ -138,27 +157,33 @@ public class p2pws implements Runnable {
 					+ "</body>" + "\n" 
 					+ "</html>";
 
-			String clength = "Content-Length: " + content.length() + "\n";
+			clength = "Content-Length: " + content.length() + "\n";
 			ret = response + clength + "\n" + content;
 
+		} else if (url.equals("/favicon.ico")) {
+			//nothing
+		} else {
+			
 			try {
 				hashnum = hashfunction.md5(url);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
 			System.out.println("hash: " + hashnum);
-
-		} else if (url.equals("/favicon.ico")) {
-			//nothing
+			
+			if (!(filemem.containsKey(hashnum))) {
+				
+				response = "HTTP/1.1 404 Not Found" + "\n";
+				ret = response;
+				
+			} else {
+				
+				response = "HTTP/1.1 200 OK" + "\n";
+				content = filemem.get(hashnum);
+				clength = "Content-Length: " + content.length() + "\n";
+				ret = response + clength + "\n" + content;
+			}	
 		}
-
-		/* if h in this peer, 
-		 *    if not found, send HTTP/1.1 404 Not Found
-		 *    else send HTTP/1.1 200 OK, content-length, content
-		 * else
-		 *    redirect and search for owner for h
-		 *    send HTTP/1.1 301 Moved Permanently, location
-		 */
 
 		return ret;
 
