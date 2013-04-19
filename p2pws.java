@@ -60,14 +60,16 @@ public class p2pws implements Runnable {
 		String line; //user input line
 		String command = "", file = "";
 
+
+
 		try {
 			BufferedReader fromClient = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			DataOutputStream toClient = new DataOutputStream(conn.getOutputStream());
 
 			//HashMap<String, String> hm = create();
 
-			line = fromClient.readLine();
-			while (line != null) {
+
+			while ((line = fromClient.readLine()) != null) {
 
 				System.out.println("first line: " + line);
 				int space = line.indexOf(' '); //first instance of space
@@ -77,23 +79,25 @@ public class p2pws implements Runnable {
 
 				System.out.println("command: " + command);
 				System.out.println("file: " + file);
-				
+
 				if (command.equals("GET")) {
+					//System.out.println(get(file));
 					toClient.writeBytes(get(file));
 					System.out.println("wrote to client");
 				} else if (command.equals("PUT")) {
-
+					System.out.println("put");
 				} else if (command.equals("DELETE")) {
-
+					System.out.println("delete");
 				} else if (command.equals("LIST")) {
-
+					System.out.println("list");
 				} else if (command.equals("PEERS")) {
-
+					System.out.println("peers");
 				} else if (command.equals("REMOVE")) {
-
+					System.out.println("remove");
 				} else if (command.equals("ADD")) {
-
+					System.out.println("add");
 				}
+				break;
 			}
 
 			System.out.println("Client exited.");
@@ -112,15 +116,15 @@ public class p2pws implements Runnable {
 	}
 	 */
 
-	public static String get(String url) {
+	public String get(String url) {
 
-		System.out.println("url: " + url);
+		//System.out.println("url: " + url);
 
 		String ret = "";
 		String hashnum = "";
 
 		if (url.equals("/local.html")) {
-
+			
 			String response = "HTTP/1.1 200 OK" + "\n";
 
 			String content = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
@@ -130,12 +134,12 @@ public class p2pws implements Runnable {
 					+ "<title> Local page </title>" + "\n" 
 					+ "</head>" + "\n" 
 					+ "<body>" + "\n"
-					+ "<p> This is the local page on peer server " + " port " + "</p>" + "\n"
+					+ "<p> This is the local page on peer server " + conn.getLocalAddress() + " port " + conn.getLocalPort() + "</p>" + "\n"
 					+ "</body>" + "\n" 
-					+ "</html>" + "\n";
+					+ "</html>";
 
 			String clength = "Content-Length: " + content.length() + "\n";
-			ret = response + clength + content + "\n";
+			ret = response + clength + "\n" + content;
 
 			try {
 				hashnum = hashfunction.md5(url);
@@ -145,8 +149,7 @@ public class p2pws implements Runnable {
 			System.out.println("hash: " + hashnum);
 
 		} else if (url.equals("/favicon.ico")) {
-
-			ret = "hai";
+			//nothing
 		}
 
 		/* if h in this peer, 
