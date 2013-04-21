@@ -6,8 +6,7 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
-
+import java.util.*;
 
 public class p2pws implements Runnable {
 
@@ -16,7 +15,7 @@ public class p2pws implements Runnable {
 	p2pws (Socket sock) {
 		this.conn = sock;
 	}
-	
+
 	HashMap<String, String> filemem = create(); //global hashmap
 
 	public static void main(String args[]) throws Exception {
@@ -57,11 +56,12 @@ public class p2pws implements Runnable {
 		}
 	}
 
-	
+
 	public void run() {
 
 		String line; //user input line
 		String command = "", file = "";
+		int count = -1;
 
 		try {
 			BufferedReader fromClient = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -69,35 +69,48 @@ public class p2pws implements Runnable {
 
 			while ((line = fromClient.readLine()) != null) {
 
-				System.out.println("first line: " + line);
-				int space = line.indexOf(' '); //first instance of space
-				command = line.substring(0, space); 
-				int filename = line.indexOf(' ', space+1);
-				file = line.substring(space+1, filename);
+				if (line.contains("HTTP/1.1")) {
 
-				System.out.println("command: " + command);
-				System.out.println("file: " + file);
+					int space = line.indexOf(' '); //first instance of space
+					command = line.substring(0, space); 
+					int filename = line.indexOf(' ', space+1);
+					file = line.substring(space+1, filename);
 
-				if (command.equals("GET")) {
+					System.out.println("command: " + command);
+					System.out.println("file: " + file);
+
+				}
+
+				if(command.equals("GET")) {
 					//System.out.println(get(file));
 					toClient.writeBytes(get(file));
 					//System.out.println("wrote to client");
 					break;
 				} else if (command.equals("PUT")) {
-					toClient.writeBytes(put(file));
-					
-				} else if (command.equals("DELETE")) {
-					System.out.println("delete");
-				} else if (command.equals("LIST")) {
-					System.out.println("list");
-				} else if (command.equals("PEERS")) {
-					System.out.println("peers");
-				} else if (command.equals("REMOVE")) {
-					System.out.println("remove");
-				} else if (command.equals("ADD")) {
-					System.out.println("add");
+
+					if (line.contains("Content-Length:")) {
+						count = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
+						System.out.println("count: " + count);
+					}
+
+					if (line.isEmpty()) {
+						
+						byte[] content = new byte[count];
+						for (int i = 0; i < count; i++) {
+							content[i] = (byte)fromClient.read();
+						}
+						toClient.writeBytes(put(file, count, content));
+						break;
+					}
 				}
-				
+			}
+			
+			
+			/* PUT test */
+			try {
+				System.out.println("hello.html: " + filemem.get(hashfunction.md5("/hello.html")));
+			} catch (Exception e) {
+				System.out.println(e);
 			}
 
 			System.out.println("Client exited.");
@@ -108,16 +121,17 @@ public class p2pws implements Runnable {
 		}
 	}
 
-	
+
 	public HashMap<String, String> create() {
+		
 		HashMap<String, String> filemem = new HashMap<String, String>();
 		String content1 = "Once upon a time, there was a fair maiden by the name of Vicki. " +
 				"She loved polishing her computers, and therefore, her gadgets are always very clean.\n";
-		
+
 		String content2 = "Seal seal seal! Anemone.\n";
-		
+
 		String content3 = "The fair maiden from content1 loves drinking water. Her Brita filter is her best friend.\n";
-		
+
 		try {
 			filemem.put(hashfunction.md5("/vicki.html"), content1);
 			filemem.put(hashfunction.md5("/anemone.html"), content2);
@@ -126,6 +140,7 @@ public class p2pws implements Runnable {
 			System.out.println(e);
 		}
 		
+
 		return filemem;	
 
 	}
@@ -138,10 +153,10 @@ public class p2pws implements Runnable {
 		String content = "";
 		String clength = "";
 		String ret = "";
-		String hashnum = "";
+		String hash = "";
 
 		if (url.equals("/local.html")) {
-			
+
 			response = "HTTP/1.1 200 OK" + "\n";
 
 			content = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
@@ -155,29 +170,30 @@ public class p2pws implements Runnable {
 					+ "</body>" + "\n" 
 					+ "</html>";
 
+			// not sure if conn.getLocalAddress() is actually correct, double check on this
 			clength = "Content-Length: " + content.length() + "\n";
 			ret = response + clength + "\n" + content;
 
 		} else if (url.equals("/favicon.ico")) {
 			//nothing
 		} else {
-			
+
 			try {
-				hashnum = hashfunction.md5(url);
+				hash = hashfunction.md5(url);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
-			System.out.println("hash: " + hashnum);
-			
-			if (!(filemem.containsKey(hashnum))) {
-				
+			System.out.println("hash: " + hash);
+
+			if (!(filemem.containsKey(hash))) {
+
 				response = "HTTP/1.1 404 Not Found" + "\n";
 				ret = response;
-				
+
 			} else {
-				
+
 				response = "HTTP/1.1 200 OK" + "\n";
-				content = filemem.get(hashnum);
+				content = filemem.get(hash);
 				clength = "Content-Length: " + content.length() + "\n";
 				ret = response + clength + "\n" + content;
 			}	
@@ -186,15 +202,26 @@ public class p2pws implements Runnable {
 		return ret;
 
 	}
-	
-	public String put(String url) {
+
+	public String put(String url, int count, byte[] data) {
+
+		System.out.println("url & count: " + url + ": " + count);
+		String content = new String(data);
+		//System.out.println("content: " + content);
 		
+		String hash = "";
+		try {
+			hash = hashfunction.md5(url);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		filemem.put(hash, content);
 		
-		
-		
-		
-		return null;
-		
+		//not sure if this actually sends, will figure out once client is made
+		String ret = "HTTP/1.1 200 OK" + "\n";
+
+		return ret;
+
 	}
 
 
