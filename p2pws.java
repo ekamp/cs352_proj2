@@ -131,15 +131,24 @@ public class p2pws implements Runnable {
 		String content2 = "Seal seal seal! Anemone.\n";
 
 		String content3 = "The fair maiden from content1 loves drinking water. Her Brita filter is her best friend.\n";
-
+		
+		String content4 = "hello!\n";
+		
 		try {
 			filemem.put(hashfunction.md5("/vicki.html"), content1);
 			filemem.put(hashfunction.md5("/anemone.html"), content2);
 			filemem.put(hashfunction.md5("/water.html"), content3);
+			filemem.put(hashfunction.md5("/hello.html"), content4);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 		
+		//PUT test
+		try {
+			System.out.println("before: " + filemem.get(hashfunction.md5("/hello.html")));
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 
 		return filemem;	
 
