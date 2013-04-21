@@ -16,9 +16,9 @@ public class p2pws implements Runnable {
 		this.conn = sock;
 	}
 
-	HashMap<String, String> filemem = create(); //global hashmap
+	static HashMap<String, String> filemem = new HashMap<String, String>(); //global hashmap
 
-	public static void main(String args[]) throws Exception {
+	public static void main(String args[]) {
 		//Only takes one arg the port number if more return error
 
 		int portnum = 12345; // default port number
@@ -43,15 +43,20 @@ public class p2pws implements Runnable {
 
 		ServerSocket svc = null; // new server socket
 
-		try {
-			svc = new ServerSocket(portnum, 5);
-		} catch (BindException e) {
-			System.out.println(e);
-			System.exit(4);
-		}
+			try {
+				svc = new ServerSocket(portnum, 5);
+			} catch (IOException e) {
+				System.out.println(e);
+				System.exit(4);
+			}
 
 		for (;;) {
-			Socket conn = svc.accept();
+			Socket conn = null;
+			try {
+				conn = svc.accept();
+			} catch (IOException e) {
+				System.out.println(e);
+			}
 			new Thread(new p2pws(conn)).start();
 		}
 	}
@@ -104,14 +109,6 @@ public class p2pws implements Runnable {
 					}
 				}
 			}
-			
-			
-			/* PUT test */
-			try {
-				System.out.println("hello.html: " + filemem.get(hashfunction.md5("/hello.html")));
-			} catch (Exception e) {
-				System.out.println(e);
-			}
 
 			System.out.println("Client exited.");
 			conn.close();
@@ -119,12 +116,13 @@ public class p2pws implements Runnable {
 		} catch (IOException e) {
 			System.out.println(e);
 		}
+		
 	}
-
 
 	public HashMap<String, String> create() {
 		
 		HashMap<String, String> filemem = new HashMap<String, String>();
+		/*
 		String content1 = "Once upon a time, there was a fair maiden by the name of Vicki. " +
 				"She loved polishing her computers, and therefore, her gadgets are always very clean.\n";
 
@@ -149,14 +147,15 @@ public class p2pws implements Runnable {
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-
+		 */
+		
 		return filemem;	
 
 	}
 
 	public String get(String url) {
 
-		//System.out.println("url: " + url);
+		System.out.println("url: " + url);
 
 		String response = "";
 		String content = "";
@@ -194,13 +193,12 @@ public class p2pws implements Runnable {
 			}
 			System.out.println("hash: " + hash);
 
+			System.out.println("contains key: " + filemem.containsKey(hash));
+			
 			if (!(filemem.containsKey(hash))) {
-
 				response = "HTTP/1.1 404 Not Found" + "\n";
 				ret = response;
-
-			} else {
-
+			} else if (filemem.containsKey(hash)){
 				response = "HTTP/1.1 200 OK" + "\n";
 				content = filemem.get(hash);
 				clength = "Content-Length: " + content.length() + "\n";
@@ -221,12 +219,20 @@ public class p2pws implements Runnable {
 		String hash = "";
 		try {
 			hash = hashfunction.md5(url);
+			System.out.println("hash: " + hash);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 		filemem.put(hash, content);
 		
-		//not sure if this actually sends, will figure out once client is made
+		/* PUT test 
+		try {
+			System.out.println("hello.html: " + filemem.get(hash));
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		*/
+		
 		String ret = "HTTP/1.1 200 OK" + "\n";
 
 		return ret;
