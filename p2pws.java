@@ -16,7 +16,7 @@ public class p2pws implements Runnable {
 		this.conn = sock;
 	}
 
-	static HashMap<String, String> filemem = new HashMap<String, String>(); //global hashmap
+	static HashMap<String, fileInfo> filemem = new HashMap<String, fileInfo>(); //global hashmap
 
 	public static void main(String args[]) {
 		//Only takes one arg the port number if more return error
@@ -74,6 +74,8 @@ public class p2pws implements Runnable {
 
 			while ((line = fromClient.readLine()) != null) {
 
+				System.out.println("line: " + line);
+				
 				if (line.contains("HTTP/1.1")) {
 
 					int space = line.indexOf(' '); //first instance of space
@@ -84,6 +86,8 @@ public class p2pws implements Runnable {
 					System.out.println("command: " + command);
 					System.out.println("file: " + file);
 
+				} else if (line.contains("LIST")) {
+					command = "LIST";
 				}
 
 				if(command.equals("GET")) {
@@ -109,7 +113,10 @@ public class p2pws implements Runnable {
 					toClient.writeBytes(delete(file));
 					break;
 				}
-			}
+				else if (command.equals("LIST")) {
+					toClient.writeBytes(list());
+				}
+			} 
 
 			System.out.println("Client exited.");
 			conn.close();
@@ -149,9 +156,7 @@ public class p2pws implements Runnable {
 			System.out.println(e);
 		}
 		 */
-		
 		return filemem;	
-
 	}
 
 	public String get(String url) {
@@ -194,7 +199,7 @@ public class p2pws implements Runnable {
 				ret = response;
 			} else if (filemem.containsKey(hash)){
 				response = "HTTP/1.1 200 OK" + "\n";
-				content = filemem.get(hash);
+				content = filemem.get(hash).content;
 				clength = "Content-Length: " + content.length() + "\n";
 				ret = response + clength + "\n" + content;
 			}	
@@ -216,7 +221,8 @@ public class p2pws implements Runnable {
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-		filemem.put(hash, content);
+		
+		filemem.put(hash, new fileInfo(url, content));
 		
 		String ret = "HTTP/1.1 200 OK" + "\n";
 
@@ -247,6 +253,21 @@ public class p2pws implements Runnable {
 		}
 		
 		return ret;
+	}
+	
+	public String list() {
+		
+		ArrayList<fileInfo> list = new ArrayList<fileInfo>(filemem.values());
+		fileInfo[] fi = list.toArray(new fileInfo[0]);
+		StringBuilder filelist = new StringBuilder();
+		for (int i = 0; i < fi.length; i++) {
+			System.out.println("filename: " + fi[i].filename);
+			filelist.append(fi[i].filename + "\n");
+			//System.out.println("content: " + fi[i].content);
+		}
+		
+		//System.out.println(filemem.toString());
+		return filelist.toString();
 	}
 
 
