@@ -87,9 +87,7 @@ public class p2pws implements Runnable {
 				}
 
 				if(command.equals("GET")) {
-					//System.out.println(get(file));
 					toClient.writeBytes(get(file));
-					//System.out.println("wrote to client");
 					break;
 				} else if (command.equals("PUT")) {
 
@@ -107,6 +105,9 @@ public class p2pws implements Runnable {
 						toClient.writeBytes(put(file, count, content));
 						break;
 					}
+				} else if (command.equals("DELETE")) {
+					toClient.writeBytes(delete(file));
+					break;
 				}
 			}
 
@@ -155,13 +156,8 @@ public class p2pws implements Runnable {
 
 	public String get(String url) {
 
-		System.out.println("url: " + url);
-
-		String response = "";
-		String content = "";
-		String clength = "";
-		String ret = "";
-		String hash = "";
+		//System.out.println("url: " + url);
+		String response = "", content = "", clength = "", ret = "", hash = "";
 
 		if (url.equals("/local.html")) {
 
@@ -176,7 +172,7 @@ public class p2pws implements Runnable {
 					+ "<body>" + "\n"
 					+ "<p> This is the local page on peer server " + conn.getLocalAddress() + " port " + conn.getLocalPort() + "</p>" + "\n"
 					+ "</body>" + "\n" 
-					+ "</html>";
+					+ "</html>" + "\n";
 
 			// not sure if conn.getLocalAddress() is actually correct, double check on this
 			clength = "Content-Length: " + content.length() + "\n";
@@ -191,9 +187,7 @@ public class p2pws implements Runnable {
 			} catch (Exception e) {
 				System.out.println(e);
 			}
-			System.out.println("hash: " + hash);
-
-			System.out.println("contains key: " + filemem.containsKey(hash));
+			//System.out.println("hash: " + hash);
 			
 			if (!(filemem.containsKey(hash))) {
 				response = "HTTP/1.1 404 Not Found" + "\n";
@@ -212,31 +206,47 @@ public class p2pws implements Runnable {
 
 	public String put(String url, int count, byte[] data) {
 
-		System.out.println("url & count: " + url + ": " + count);
+		//System.out.println("url & count: " + url + ": " + count);
 		String content = new String(data);
+		String hash = "";
 		//System.out.println("content: " + content);
 		
-		String hash = "";
+		try {
+			hash = hashfunction.md5(url);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		filemem.put(hash, content);
+		
+		String ret = "HTTP/1.1 200 OK" + "\n";
+
+		return ret;
+
+	}
+	
+	public String delete(String url) {
+		
+		String response = "", clength = "", ret = "", hash = "";
+		
 		try {
 			hash = hashfunction.md5(url);
 			System.out.println("hash: " + hash);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-		filemem.put(hash, content);
 		
-		/* PUT test 
-		try {
-			System.out.println("hello.html: " + filemem.get(hash));
-		} catch (Exception e) {
-			System.out.println(e);
+		if (!(filemem.containsKey(hash))) {
+			response = "HTTP/1.1 404 Not Found" + "\n";
+			clength = "Content-Length: 0" + "\n";
+			ret = response + clength;
+		} else if (filemem.containsKey(hash)){
+			filemem.remove(hash);
+			response = "HTTP/1.1 200 OK" + "\n";
+			clength = "Content-Length: 0" + "\n";
+			ret = response + clength;
 		}
-		*/
 		
-		String ret = "HTTP/1.1 200 OK" + "\n";
-
 		return ret;
-
 	}
 
 
