@@ -1,0 +1,12 @@
+curl -T hello.html localhost:4000
+
+PUT /hello.html HTTP/1.1
+User-Agent: curl/7.24.0 (x86_64-apple-darwin12.0) libcurl/7.24.0 OpenSSL/0.9.8r zlib/1.2.5
+Host: localhost:4003
+Accept: */*
+Content-Length: 23
+Expect: 100-continue
+
+<HTML> 
+    hi
+</HTML>

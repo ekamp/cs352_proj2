@@ -1,7 +1,7 @@
-/* Group Members:
+/* GROUP MEMBERS:
  * Jingfei Shi
- * Lindsey Crocker
  * Erik Kamp
+ * Lindsey Crocker
  */
 
 import java.io.*;
@@ -19,9 +19,10 @@ public class p2pws implements Runnable {
 	static HashMap<String, fileInfo> filemem = new HashMap<String, fileInfo>(); //global hashmap
 
 	public static void main(String args[]) {
+		
 		//Only takes one arg the port number if more return error
 
-		int portnum = 12345; // default port number
+		int portnum = 0; // default port number
 
 		/* checking arguments for correct format */
 		if (args.length == 1) {
@@ -36,8 +37,8 @@ public class p2pws implements Runnable {
 				System.out.println("Port is not in range, exiting.");
 				System.exit(2);
 			}
-		} else if (args.length > 1) {
-			System.out.println("Too many arguments, exiting.");
+		} else if (args.length != 1) {
+			System.out.println("ERROR: Invalid number of arguments, exiting.");
 			System.exit(3);
 		}
 
@@ -112,7 +113,6 @@ public class p2pws implements Runnable {
 					}
 				} else if (command.equals("DELETE")) {
 					toClient.writeBytes(delete(file));
-					break;
 				}
 				else if (command.equals("LIST")) {
 					toClient.writeBytes(list());
@@ -241,19 +241,19 @@ public class p2pws implements Runnable {
 		
 		try {
 			hash = hashfunction.md5(url);
-			System.out.println("hash: " + hash);
+			//System.out.println("hash: " + hash);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 		
 		if (!(filemem.containsKey(hash))) {
 			response = "HTTP/1.1 404 Not Found" + "\n";
-			clength = "Content-Length: 0" + "\n";
+			clength = "Content-Length: 0" + "\n\n";
 			ret = response + clength;
 		} else if (filemem.containsKey(hash)){
 			filemem.remove(hash);
 			response = "HTTP/1.1 200 OK" + "\n";
-			clength = "Content-Length: 0" + "\n";
+			clength = "Content-Length: 0" + "\n\n";
 			ret = response + clength;
 		}
 		
@@ -266,7 +266,7 @@ public class p2pws implements Runnable {
 		fileInfo[] fi = list.toArray(new fileInfo[0]);
 		StringBuilder filelist = new StringBuilder();
 		for (int i = 0; i < fi.length; i++) {
-			System.out.println("filename: " + fi[i].filename);
+			//System.out.println("filename: " + fi[i].filename);
 			filelist.append(fi[i].filename + "\n");
 			//System.out.println("content: " + fi[i].content);
 		}
