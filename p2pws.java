@@ -74,7 +74,7 @@ public class p2pws implements Runnable {
 
 			while ((line = fromClient.readLine()) != null) {
 
-				System.out.println("line: " + line);
+				//System.out.println("line: " + line);
 				
 				if (line.contains("HTTP/1.1")) {
 
@@ -83,9 +83,11 @@ public class p2pws implements Runnable {
 					int filename = line.indexOf(' ', space+1);
 					file = line.substring(space+1, filename);
 
+					/*
 					System.out.println("command: " + command);
 					System.out.println("file: " + file);
-
+					*/
+					
 				} else if (line.contains("LIST")) {
 					command = "LIST";
 				}
@@ -97,7 +99,7 @@ public class p2pws implements Runnable {
 
 					if (line.contains("Content-Length:")) {
 						count = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
-						System.out.println("count: " + count);
+						//System.out.println("count: " + count);
 					}
 
 					if (line.isEmpty()) {
@@ -107,7 +109,6 @@ public class p2pws implements Runnable {
 							content[i] = (byte)fromClient.read();
 						}
 						toClient.writeBytes(put(file, count, content));
-						break;
 					}
 				} else if (command.equals("DELETE")) {
 					toClient.writeBytes(delete(file));
@@ -162,13 +163,14 @@ public class p2pws implements Runnable {
 	public String get(String url) {
 
 		//System.out.println("url: " + url);
-		String response = "", content = "", clength = "", ret = "", hash = "";
-
+		String response = "", filecontent = "", clength = "", ret = "", hash = "";
+		byte[] content; 
+		
 		if (url.equals("/local.html")) {
 
 			response = "HTTP/1.1 200 OK" + "\n";
 
-			content = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
+			filecontent = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" + "\n"
 					+ "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">" + "\n"
 					+ "<head>" + "\n" 
 					+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />" + "\n"
@@ -179,9 +181,11 @@ public class p2pws implements Runnable {
 					+ "</body>" + "\n" 
 					+ "</html>" + "\n";
 
+			content = filecontent.getBytes();
+
 			// not sure if conn.getLocalAddress() is actually correct, double check on this
-			clength = "Content-Length: " + content.length() + "\n";
-			ret = response + clength + "\n" + content;
+			clength = "Content-Length: " + content.length + "\n";
+			ret = response + clength + "\n" + filecontent;
 
 		} else if (url.equals("/favicon.ico")) {
 			//nothing
@@ -199,9 +203,10 @@ public class p2pws implements Runnable {
 				ret = response;
 			} else if (filemem.containsKey(hash)){
 				response = "HTTP/1.1 200 OK" + "\n";
-				content = filemem.get(hash).content;
-				clength = "Content-Length: " + content.length() + "\n";
-				ret = response + clength + "\n" + content;
+				filecontent = (filemem.get(hash).content);
+				content = filecontent.getBytes();
+				clength = "Content-Length: " + content.length + "\n";
+				ret = response + clength + "\n" + filecontent;
 			}	
 		}
 
@@ -213,7 +218,7 @@ public class p2pws implements Runnable {
 
 		//System.out.println("url & count: " + url + ": " + count);
 		String content = new String(data);
-		String hash = "";
+		String hash = "", ret = "";
 		//System.out.println("content: " + content);
 		
 		try {
@@ -224,7 +229,7 @@ public class p2pws implements Runnable {
 		
 		filemem.put(hash, new fileInfo(url, content));
 		
-		String ret = "HTTP/1.1 200 OK" + "\n";
+		ret = "HTTP/1.1 200 OK" + "\n" + "Content-Length: 0" + "\n\n";
 
 		return ret;
 

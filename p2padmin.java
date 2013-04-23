@@ -5,6 +5,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 public class p2padmin implements Runnable {
 
@@ -68,78 +69,77 @@ public class p2padmin implements Runnable {
 		String line; // holds user input to the server
 
 		String command = "", filename = "", localfile = "", content = "", request = "";
-		int space, fileindex, clength;
+		int space = 0, fileindex, clength;
 		byte[] filecontent;
 
 		try {
 			while ((line = userdata.readLine()) != null) {
-				
+
 				if (line.isEmpty()) continue;
 
-				System.out.println("client typed: " + line);
-				space = line.indexOf(' ');
-				command = line.substring(0, space);
+				//System.out.println("client typed: " + line);
+				try {
+					space = line.indexOf(' ');
+					command = line.substring(0, space);
+				} catch (StringIndexOutOfBoundsException e) {
+					System.out.println("ERROR: Incorrect input format, please try again.");
+					continue;
+				}
 
 				if (command.equals("delete")) {
 					fileindex = line.indexOf('/', space+1);
 					filename = line.substring(fileindex);
 					request = "DELETE " + filename + " HTTP/1.1" + "\n";
 				} else if (command.equals("put")) {
-					fileindex = line.indexOf('/', space+1);
-					space = line.indexOf(' ', fileindex);
-					filename = line.substring(fileindex, space);
-					localfile = line.substring(space+1);
-					//get the content of the file
-					BufferedReader br = new BufferedReader(new FileReader(localfile));
 					try {
-						StringBuilder sb = new StringBuilder();
-						String theline = br.readLine();
+						fileindex = line.indexOf('/', space+1);
+						space = line.indexOf(' ', fileindex);
+						filename = line.substring(fileindex, space);
+						localfile = line.substring(space+1);
+					} catch (StringIndexOutOfBoundsException e) {
+						System.out.println("ERROR: Incorrect input format, please try again.");
+						continue;
+					}
 
-						while (theline != null) {
-							sb.append(theline);
-							sb.append("\n");
-							theline = br.readLine();
-						}
-						content = sb.toString();
-					} finally {
-						br.close();
-					}	
+					/*
+					System.out.println("Content: " + content);
+					System.out.println("put: " + command);
+					System.out.println("filename: " + filename);
+					System.out.println("localfile: " + localfile);
+					*/
+					//get the content of the file
+					content = readFile(localfile);
 
 					filecontent = content.getBytes();
 					clength = filecontent.length;
 
 					request = "PUT " + filename + " HTTP/1.1" + "\n"+ "Content-Length: " + clength + "\n\n" + content;
 
-					System.out.println("Content: " + content);
-					System.out.println("put: " + command);
-					System.out.println("filename: " + filename);
-					System.out.println("localfile: " + localfile);
 				} else if (command.equals("list")) {
-					request = "LIST";
+					request = "LIST" + "\n";
+				} else {
+					System.out.println("ERROR: Incorrect input format, please try again.");
+					continue;
 				}
 
-				System.out.println("request: " + request);
+				//System.out.println("request: " + request);
 
-
-				/*
 				try {
-					toServer.writeBytes(request + '\n');
+					toServer.writeBytes(request);
 				} catch (SocketException e) { // in case server dies mid-session
 					System.out.println("Socket closed: " + e);
 					//System.exit(7);
 				}
-				*/
-				
-				toServer.writeBytes(request + "\n");
 			}
 		} catch (IOException e) {
-			System.out.println("while loop: " + e);
+			e.printStackTrace();
+			System.out.println(e);
 		}
 
 		try {
 			conn.close();
 		} catch (IOException e) {
-			System.out.println("conn close " + e);
+			System.out.println(e);
 		}
 	}
 
@@ -153,11 +153,29 @@ public class p2padmin implements Runnable {
 			BufferedReader fromServer = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
 			while ((result = fromServer.readLine()) != null) {
-				System.out.println("=> " + result);
+				System.out.println(result);
 			}
 			conn.close(); // connection will be closed upon ctrl+d
 		} catch (IOException e) {
 			System.out.println("run() " + e);
 		}
+	}
+
+	public static String readFile(String filename) throws FileNotFoundException {
+
+		File localfile = new File(filename);
+		Scanner sc = new Scanner(localfile);
+		String content = "";
+
+		while (sc.hasNextLine()) {
+			content += sc.nextLine();
+			if (sc.hasNext() == true) {
+				content += "\n";
+			}
+		}
+
+		//System.out.println("content: " + content);
+		return content;
+
 	}
 }
