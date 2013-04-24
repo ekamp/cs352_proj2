@@ -1,3 +1,13 @@
+/* GROUP MEMBERS:
+ * Jingfei Shi
+ * Erik Kamp
+ * Lindsey Crocker
+ */
+
+/* fileInfo:
+ * - object that contains the file name and content of that file
+ * - stored in the hashmap (value)
+ */
 
 public class fileInfo {
 
